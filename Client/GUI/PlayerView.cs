@@ -225,34 +225,25 @@ namespace SysDVR.Client.GUI
         {
             Program.SdlCtx.BugCheckThreadId();
 
-            // This hardcodes YUV dats
             if (Video.TargetTextureFormat != SDL_PIXELFORMAT_IYUV)
                 return;
 
-            byte[] data = null;
+            int w = Video.OutputWidth;
+            int h = Video.OutputHeight;
+            int yPitch = w;
+            int uvPitch = w / 2;
+            int ySize = yPitch * h;
+            int uvSize = uvPitch * (h / 2);
+            int totalSize = ySize + (2 * uvSize);
 
-            try
-            {
-                data = Resources.ReadResource(Resources.LoadingImage);
-            }
-            catch
-            {
-                // Don't care
-            }
-
-            if (data == null)
-            {
-                // Hardcoded buffer size for a 1280x720 YUV texture
-                data = new byte[0x1517F0];
-                // Fill with YUV white
-                data.AsSpan(0, 0xE1000).Fill(0xFF);
-                data.AsSpan(0xE1000, 0x119400 - 0xE1000).Fill(0x7F);
-                data.AsSpan(0x119400).Fill(0x80);
-            }
+            byte[] data = new byte[totalSize];
+            data.AsSpan(0, ySize).Fill(0xFF);
+            data.AsSpan(ySize, uvSize).Fill(0x7F);
+            data.AsSpan(ySize + uvSize).Fill(0x80);
 
             fixed (byte* ptr = data)
                 SDL_UpdateYUVTexture(Video.TargetTexture, ref Video.TargetTextureSize,
-                    (nint)ptr, 1280, (nint)(ptr + 0xE1000), 640, (nint)(ptr + 0x119400), 640);
+                    (nint)ptr, yPitch, (nint)(ptr + ySize), uvPitch, (nint)(ptr + ySize + uvSize), uvPitch);
         }
     }
 

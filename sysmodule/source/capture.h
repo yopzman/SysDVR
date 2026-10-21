@@ -4,10 +4,10 @@
 #define STREAM_PACKET_HEADER 0xCCCCCCCC
 
 /*
-	This is higher than what suggested on switchbrw to fix https://github.com/exelix11/SysDVR/issues/91,
-	See the comment in ReadVideoStream()
+	Increased to 0x80000 (512KB) to support 60 FPS and higher bitrates (up to 20 Mbps)
+	without dropping large IDR keyframes (fixes error 0xcd4/2212-0006).
 */
-#define VbufSz 0x54000
+#define VbufSz 0x80000
 
 /*
 	Audio is 16bit pcm at 48000hz stereo. In official software it's read in 0x1000 chunks

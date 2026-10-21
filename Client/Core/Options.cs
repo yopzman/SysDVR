@@ -20,6 +20,15 @@ namespace SysDVR.Client.Core
         Best
     }
 
+    public enum UpscalerMode
+    {
+        Off,
+        Bicubic_1080p,
+        Lanczos_1080p,
+        Lanczos_1440p,
+        Lanczos_4K
+    }
+
     public enum SDLAudioMode 
     {
         Compatible,
@@ -52,6 +61,7 @@ namespace SysDVR.Client.Core
         // SDL options
         public bool ForceSoftwareRenderer;
         public SDLScaleMode RendererScale = SDLScaleMode.Linear;
+        public UpscalerMode Upscaler = UpscalerMode.Off;
         public SDLAudioMode AudioPlayerMode = SDLAudioMode.Auto;
 
         // Sysmodule options

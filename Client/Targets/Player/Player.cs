@@ -168,14 +168,52 @@ namespace SysDVR.Client.Targets.Player
         public string DecoderName { get; private set; }
         public bool UsingCustomDecoder { get; private set; }
 
+        public int OutputWidth { get; private set; } = StreamInfo.VideoWidth;
+        public int OutputHeight { get; private set; } = StreamInfo.VideoHeight;
+        public int SwsScalingFlags { get; private set; } = SWS_FAST_BILINEAR;
+        public bool IsUpscalingEnabled => OutputWidth != StreamInfo.VideoWidth || OutputHeight != StreamInfo.VideoHeight;
+
         public object TextureLock;
         public IntPtr TargetTexture;
         public SDL_Rect TargetTextureSize;
 
         public VideoPlayer(string? preferredDecoderName)
         {
+            SetupUpscaler();
             InitVideoDecoder(preferredDecoderName);
             InitSDLRenderTexture();
+        }
+
+        void SetupUpscaler()
+        {
+            switch (Program.Options.Upscaler)
+            {
+                case UpscalerMode.Bicubic_1080p:
+                    OutputWidth = 1920;
+                    OutputHeight = 1080;
+                    SwsScalingFlags = SWS_BICUBIC;
+                    break;
+                case UpscalerMode.Lanczos_1080p:
+                    OutputWidth = 1920;
+                    OutputHeight = 1080;
+                    SwsScalingFlags = SWS_LANCZOS;
+                    break;
+                case UpscalerMode.Lanczos_1440p:
+                    OutputWidth = 2560;
+                    OutputHeight = 1440;
+                    SwsScalingFlags = SWS_LANCZOS;
+                    break;
+                case UpscalerMode.Lanczos_4K:
+                    OutputWidth = 3840;
+                    OutputHeight = 2160;
+                    SwsScalingFlags = SWS_LANCZOS;
+                    break;
+                default:
+                    OutputWidth = StreamInfo.VideoWidth;
+                    OutputHeight = StreamInfo.VideoHeight;
+                    SwsScalingFlags = SWS_FAST_BILINEAR;
+                    break;
+            }
         }
 
         void InitSDLRenderTexture()
@@ -184,7 +222,7 @@ namespace SysDVR.Client.Targets.Player
 
             var tex = SDL_CreateTexture(Program.SdlCtx.RendererHandle, TargetTextureFormat,
                 (int)SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING,
-                StreamInfo.VideoWidth, StreamInfo.VideoHeight).AssertNotNull(SDL_GetError);
+                OutputWidth, OutputHeight).AssertNotNull(SDL_GetError);
 
             if (Program.Options.Debug.Log)
             {
@@ -199,7 +237,7 @@ namespace SysDVR.Client.Targets.Player
                     }
             }
 
-            TargetTextureSize = new SDL_Rect() { x = 0, y = 0, w = StreamInfo.VideoWidth, h = StreamInfo.VideoHeight };
+            TargetTextureSize = new SDL_Rect() { x = 0, y = 0, w = OutputWidth, h = OutputHeight };
             TargetTexture = tex;
             TextureLock = new object();
         }
@@ -346,59 +384,59 @@ namespace SysDVR.Client.Targets.Player
                 {
 					Program.DebugLog($"Decoder.CodecCtx uses pixel format {Decoder.CodecCtx->pix_fmt}");
 
-                    converterFirstFrameCheck = true;
-                    if (Decoder.CodecCtx->pix_fmt != TargetDecodingFormat)
-                    {
-                        Converter = InitializeConverter(Decoder.CodecCtx);
-                        // Render to the converted frame
-                        Decoder.RenderFrame = Converter.Frame;
-                    }
-                }
+	                    converterFirstFrameCheck = true;
+	                    if (Decoder.CodecCtx->pix_fmt != TargetDecodingFormat || IsUpscalingEnabled)
+	                    {
+	                        Converter = InitializeConverter(Decoder.CodecCtx);
+	                        // Render to the converted frame
+	                        Decoder.RenderFrame = Converter.Frame;
+	                    }
+	                }
 
-                if (Converter.Converter != null)
-                {
-                    var source = Decoder.ReceiveFrame;
-                    var target = Decoder.RenderFrame;
-                    sws_scale(Converter.Converter, source->data, source->linesize, 0, source->height, target->data, target->linesize);
-                }
-                else
-                {
-                    // Swap the frames so we can render source
-                    var toRender = Decoder.ReceiveFrame;
-                    var receiveNext = Decoder.RenderFrame;
+	                if (Converter.Converter != null)
+	                {
+	                    var source = Decoder.ReceiveFrame;
+	                    var target = Decoder.RenderFrame;
+	                    sws_scale(Converter.Converter, source->data, source->linesize, 0, source->height, target->data, target->linesize);
+	                }
+	                else
+	                {
+	                    // Swap the frames so we can render source
+	                    var toRender = Decoder.ReceiveFrame;
+	                    var receiveNext = Decoder.RenderFrame;
 
-                    Decoder.ReceiveFrame = receiveNext;
-                    Decoder.RenderFrame = toRender;
-                }
+	                    Decoder.ReceiveFrame = receiveNext;
+	                    Decoder.RenderFrame = toRender;
+	                }
 
-                return true;
-            }
-        }
+	                return true;
+	            }
+	        }
 
-        unsafe static FormatConverterContext InitializeConverter(AVCodecContext* codecctx)
-        {
-            AVFrame* dstframe = null;
-            SwsContext* swsContext = null;
+	        unsafe FormatConverterContext InitializeConverter(AVCodecContext* codecctx)
+	        {
+	            AVFrame* dstframe = null;
+	            SwsContext* swsContext = null;
 
-            Program.DebugLog($"Initializing converter for {codecctx->pix_fmt}");
+	            Program.DebugLog($"Initializing converter/upscaler for {codecctx->pix_fmt} -> {TargetDecodingFormat} ({OutputWidth}x{OutputHeight})");
 
-            dstframe = av_frame_alloc();
+	            dstframe = av_frame_alloc();
 
-            if (dstframe == null)
-                throw new Exception("Couldn't allocate the the converted frame");
+	            if (dstframe == null)
+	                throw new Exception("Couldn't allocate the converted frame");
 
-            dstframe->format = (int)TargetDecodingFormat;
-            dstframe->width = StreamInfo.VideoWidth;
-            dstframe->height = StreamInfo.VideoHeight;
+	            dstframe->format = (int)TargetDecodingFormat;
+	            dstframe->width = OutputWidth;
+	            dstframe->height = OutputHeight;
 
-            av_frame_get_buffer(dstframe, 32).AssertZero("Couldn't allocate the buffer for the converted frame");
+	            av_frame_get_buffer(dstframe, 32).AssertZero("Couldn't allocate the buffer for the converted frame");
 
-            swsContext = sws_getContext(codecctx->width, codecctx->height, codecctx->pix_fmt,
-                                        dstframe->width, dstframe->height, (AVPixelFormat)dstframe->format,
-                                        SWS_FAST_BILINEAR, null, null, null);
+	            swsContext = sws_getContext(codecctx->width, codecctx->height, codecctx->pix_fmt,
+	                                        dstframe->width, dstframe->height, (AVPixelFormat)dstframe->format,
+	                                        SwsScalingFlags, null, null, null);
 
-            if (swsContext == null)
-                throw new Exception("Couldn't initialize the converter");
+	            if (swsContext == null)
+	                throw new Exception("Couldn't initialize the converter");
 
             return new FormatConverterContext()
             {

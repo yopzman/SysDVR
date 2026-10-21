@@ -138,14 +138,25 @@ namespace SysDVR.Client.GUI
 		readonly StringTable.SettingsTable Strings = Program.Strings.Settings;
 
 		// These can not refer to a non-static member so they use the fully quelified strings object
-		readonly ComboEnum<SDLScaleMode> ScaleModes = new(Program.Strings.Settings.ScaleMode,
-			[
-				new(Program.Strings.Settings.ScaleMode_Linear, SDLScaleMode.Linear),
-				new(Program.Strings.Settings.ScaleMode_Narest, SDLScaleMode.Nearest),
-				new(Program.Strings.Settings.ScaleMode_Best, SDLScaleMode.Best)
-			],
-			Program.Options.RendererScale
-		);
+			readonly ComboEnum<SDLScaleMode> ScaleModes = new(Program.Strings.Settings.ScaleMode,
+				[
+					new(Program.Strings.Settings.ScaleMode_Linear, SDLScaleMode.Linear),
+					new(Program.Strings.Settings.ScaleMode_Narest, SDLScaleMode.Nearest),
+					new(Program.Strings.Settings.ScaleMode_Best, SDLScaleMode.Best)
+				],
+				Program.Options.RendererScale
+			);
+
+			readonly ComboEnum<UpscalerMode> UpscalerModes = new(Program.Strings.Settings.Upscaler,
+				[
+					new(Program.Strings.Settings.Upscaler_Off, UpscalerMode.Off),
+					new(Program.Strings.Settings.Upscaler_Bicubic_1080p, UpscalerMode.Bicubic_1080p),
+					new(Program.Strings.Settings.Upscaler_Lanczos_1080p, UpscalerMode.Lanczos_1080p),
+					new(Program.Strings.Settings.Upscaler_Lanczos_1440p, UpscalerMode.Lanczos_1440p),
+					new(Program.Strings.Settings.Upscaler_Lanczos_4K, UpscalerMode.Lanczos_4K)
+				],
+				Program.Options.Upscaler
+			);
 
 		readonly ComboEnum<SDLAudioMode> AudioModes = new(Program.Strings.Settings.AudioMode,
 			[
@@ -260,7 +271,8 @@ namespace SysDVR.Client.GUI
 
 				ImGui.Checkbox(Strings.HideSerials, ref Program.Options.HideSerials);
 				ImGui.Checkbox(Strings.Hotkeys, ref Program.Options.PlayerHotkeys);
-				ScaleModes.Draw(ref Program.Options.RendererScale);
+					ScaleModes.Draw(ref Program.Options.RendererScale);
+					UpscalerModes.Draw(ref Program.Options.Upscaler);
 				AudioModes.Draw(ref Program.Options.AudioPlayerMode);
 
 				// Recording save path, TODO: implement file picker but doing it cross platform seems like a major headache

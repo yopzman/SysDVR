@@ -43,9 +43,9 @@ namespace SysDVR.Client.Sources
             var header = MemoryMarshal.Read<PacketHeader>(headerBin);
             var body = PoolBuffer.Rent(header.DataSize);
 
-			try
-			{
-				await Source.BaseStream.ReadAsync(body.Memory, Cancellation);
+				try
+				{
+					await Source.BaseStream.ReadExactlyAsync(body.Memory, Cancellation);
 
 				var tsDelay = Source.ReadUInt32();
 

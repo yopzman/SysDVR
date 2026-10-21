@@ -179,6 +179,13 @@ namespace SysDVR.Client.Core
 			public string ScaleMode_Narest = "Nearest (low overhead)";
 			public string ScaleMode_Best = "Best (high quality, up to the system)";
 
+			public string Upscaler = "Video Upscaler";
+			public string Upscaler_Off = "Off (Native 720p)";
+			public string Upscaler_Bicubic_1080p = "Bicubic 1080p";
+			public string Upscaler_Lanczos_1080p = "Lanczos 1080p (Ultra Sharp)";
+			public string Upscaler_Lanczos_1440p = "Lanczos 1440p (2K)";
+			public string Upscaler_Lanczos_4K = "Lanczos 4K (Ultra HD)";
+
 			public string AudioMode = "Audio player mode";
 			public string AudioMode_Auto = "Automatic (default)";
 			public string AudioMode_Sync = "Synchronized";
