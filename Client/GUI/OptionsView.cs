@@ -150,10 +150,12 @@ namespace SysDVR.Client.GUI
 			readonly ComboEnum<UpscalerMode> UpscalerModes = new(Program.Strings.Settings.Upscaler,
 				[
 					new(Program.Strings.Settings.Upscaler_Off, UpscalerMode.Off),
-					new(Program.Strings.Settings.Upscaler_Bicubic_1080p, UpscalerMode.Bicubic_1080p),
+					new(Program.Strings.Settings.Upscaler_FSR1_1080p, UpscalerMode.FSR1_1080p),
+					new(Program.Strings.Settings.Upscaler_FSR1_1440p, UpscalerMode.FSR1_1440p),
+					new(Program.Strings.Settings.Upscaler_FSR1_4K, UpscalerMode.FSR1_4K),
+					new(Program.Strings.Settings.Upscaler_FSR_RCAS_Only, UpscalerMode.FSR_RCAS_Only),
 					new(Program.Strings.Settings.Upscaler_Lanczos_1080p, UpscalerMode.Lanczos_1080p),
-					new(Program.Strings.Settings.Upscaler_Lanczos_1440p, UpscalerMode.Lanczos_1440p),
-					new(Program.Strings.Settings.Upscaler_Lanczos_4K, UpscalerMode.Lanczos_4K)
+					new(Program.Strings.Settings.Upscaler_Bicubic_1080p, UpscalerMode.Bicubic_1080p)
 				],
 				Program.Options.Upscaler
 			);

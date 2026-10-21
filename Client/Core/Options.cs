@@ -23,10 +23,12 @@ namespace SysDVR.Client.Core
     public enum UpscalerMode
     {
         Off,
+        FSR1_1080p,
+        FSR1_1440p,
+        FSR1_4K,
+        FSR_RCAS_Only,
         Bicubic_1080p,
-        Lanczos_1080p,
-        Lanczos_1440p,
-        Lanczos_4K
+        Lanczos_1080p
     }
 
     public enum SDLAudioMode 

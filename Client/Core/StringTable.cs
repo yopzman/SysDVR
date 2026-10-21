@@ -181,10 +181,12 @@ namespace SysDVR.Client.Core
 
 			public string Upscaler = "Video Upscaler";
 			public string Upscaler_Off = "Off (Native 720p)";
-			public string Upscaler_Bicubic_1080p = "Bicubic 1080p";
+			public string Upscaler_FSR1_1080p = "AMD FSR 1.0 (1080p Ultra Quality)";
+			public string Upscaler_FSR1_1440p = "AMD FSR 1.0 (1440p Quality)";
+			public string Upscaler_FSR1_4K = "AMD FSR 1.0 (4K Performance)";
+			public string Upscaler_FSR_RCAS_Only = "AMD FidelityFX RCAS (720p Sharpening)";
+			public string Upscaler_Bicubic_1080p = "Bicubic 1080p (Smooth)";
 			public string Upscaler_Lanczos_1080p = "Lanczos 1080p (Ultra Sharp)";
-			public string Upscaler_Lanczos_1440p = "Lanczos 1440p (2K)";
-			public string Upscaler_Lanczos_4K = "Lanczos 4K (Ultra HD)";
 
 			public string AudioMode = "Audio player mode";
 			public string AudioMode_Auto = "Automatic (default)";

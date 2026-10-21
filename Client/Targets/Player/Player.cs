@@ -171,6 +171,7 @@ namespace SysDVR.Client.Targets.Player
         public int OutputWidth { get; private set; } = StreamInfo.VideoWidth;
         public int OutputHeight { get; private set; } = StreamInfo.VideoHeight;
         public int SwsScalingFlags { get; private set; } = SWS_FAST_BILINEAR;
+        public bool ApplyRCAS { get; private set; } = false;
         public bool IsUpscalingEnabled => OutputWidth != StreamInfo.VideoWidth || OutputHeight != StreamInfo.VideoHeight;
 
         public object TextureLock;
@@ -186,32 +187,51 @@ namespace SysDVR.Client.Targets.Player
 
         void SetupUpscaler()
         {
+            ApplyRCAS = false;
+
             switch (Program.Options.Upscaler)
             {
-                case UpscalerMode.Bicubic_1080p:
+                case UpscalerMode.FSR1_1080p:
                     OutputWidth = 1920;
                     OutputHeight = 1080;
-                    SwsScalingFlags = SWS_BICUBIC;
+                    SwsScalingFlags = SWS_LANCZOS;
+                    ApplyRCAS = true;
+                    break;
+                case UpscalerMode.FSR1_1440p:
+                    OutputWidth = 2560;
+                    OutputHeight = 1440;
+                    SwsScalingFlags = SWS_LANCZOS;
+                    ApplyRCAS = true;
+                    break;
+                case UpscalerMode.FSR1_4K:
+                    OutputWidth = 3840;
+                    OutputHeight = 2160;
+                    SwsScalingFlags = SWS_LANCZOS;
+                    ApplyRCAS = true;
+                    break;
+                case UpscalerMode.FSR_RCAS_Only:
+                    OutputWidth = StreamInfo.VideoWidth;
+                    OutputHeight = StreamInfo.VideoHeight;
+                    SwsScalingFlags = SWS_FAST_BILINEAR;
+                    ApplyRCAS = true;
                     break;
                 case UpscalerMode.Lanczos_1080p:
                     OutputWidth = 1920;
                     OutputHeight = 1080;
                     SwsScalingFlags = SWS_LANCZOS;
+                    ApplyRCAS = false;
                     break;
-                case UpscalerMode.Lanczos_1440p:
-                    OutputWidth = 2560;
-                    OutputHeight = 1440;
-                    SwsScalingFlags = SWS_LANCZOS;
-                    break;
-                case UpscalerMode.Lanczos_4K:
-                    OutputWidth = 3840;
-                    OutputHeight = 2160;
-                    SwsScalingFlags = SWS_LANCZOS;
+                case UpscalerMode.Bicubic_1080p:
+                    OutputWidth = 1920;
+                    OutputHeight = 1080;
+                    SwsScalingFlags = SWS_BICUBIC;
+                    ApplyRCAS = false;
                     break;
                 default:
                     OutputWidth = StreamInfo.VideoWidth;
                     OutputHeight = StreamInfo.VideoHeight;
                     SwsScalingFlags = SWS_FAST_BILINEAR;
+                    ApplyRCAS = false;
                     break;
             }
         }
@@ -393,21 +413,31 @@ namespace SysDVR.Client.Targets.Player
 	                    }
 	                }
 
-	                if (Converter.Converter != null)
-	                {
-	                    var source = Decoder.ReceiveFrame;
-	                    var target = Decoder.RenderFrame;
-	                    sws_scale(Converter.Converter, source->data, source->linesize, 0, source->height, target->data, target->linesize);
-	                }
-	                else
-	                {
-	                    // Swap the frames so we can render source
-	                    var toRender = Decoder.ReceiveFrame;
-	                    var receiveNext = Decoder.RenderFrame;
+		                if (Converter.Converter != null)
+		                {
+		                    var source = Decoder.ReceiveFrame;
+		                    var target = Decoder.RenderFrame;
+		                    sws_scale(Converter.Converter, source->data, source->linesize, 0, source->height, target->data, target->linesize);
 
-	                    Decoder.ReceiveFrame = receiveNext;
-	                    Decoder.RenderFrame = toRender;
-	                }
+		                    if (ApplyRCAS && target->data[0] != null)
+		                    {
+		                        FidelityFX.ApplyRCAS(target->data[0], OutputWidth, OutputHeight, target->linesize[0]);
+		                    }
+		                }
+		                else
+		                {
+		                    // Swap the frames so we can render source
+		                    var toRender = Decoder.ReceiveFrame;
+		                    var receiveNext = Decoder.RenderFrame;
+
+		                    Decoder.ReceiveFrame = receiveNext;
+		                    Decoder.RenderFrame = toRender;
+
+		                    if (ApplyRCAS && toRender->data[0] != null)
+		                    {
+		                        FidelityFX.ApplyRCAS(toRender->data[0], OutputWidth, OutputHeight, toRender->linesize[0]);
+		                    }
+		                }
 
 	                return true;
 	            }
