@@ -370,9 +370,23 @@ namespace SysDVR.Client.GUI
             for (int i = 0; i < notifications.Count; i++)
             {
                 var notif = notifications[i];
-                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1, 0, 0, 1));
-                ImGui.TextWrapped(notif.Text);
+                var textSize = ImGui.CalcTextSize(notif.Text);
+                var padding = new Vector2(14, 8);
+                var cursor = ImGui.GetCursorScreenPos();
+                var dl = ImGui.GetWindowDrawList();
+                var rectMin = cursor;
+                var rectMax = cursor + textSize + padding * 2;
+
+                dl.AddRectFilled(rectMin, rectMax, ImGui.GetColorU32(new Vector4(0.10f, 0.12f, 0.16f, 0.88f)), 8.0f);
+                dl.AddRect(rectMin, rectMax, ImGui.GetColorU32(new Vector4(0.20f, 0.55f, 0.95f, 0.75f)), 8.0f, ImDrawFlags.None, 1.5f);
+
+                ImGui.SetCursorScreenPos(cursor + padding);
+                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.95f, 0.96f, 0.98f, 1.0f));
+                ImGui.Text(notif.Text);
                 ImGui.PopStyleColor();
+
+                ImGui.SetCursorScreenPos(new Vector2(cursor.X, rectMax.Y + 6));
+
                 if (notif.ShouldRemove)
                 {
                     notifications.RemoveAt(i);

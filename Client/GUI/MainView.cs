@@ -254,8 +254,12 @@ namespace SysDVR.Client.GUI
             var btn = ImGui.ButtonBehavior(bodySize, id, out var hovered, out var held, ImGuiButtonFlags.MouseButtonDefault);
             var col = ImGui.GetColorU32((held && hovered) ? ImGuiCol.ButtonActive : hovered ? ImGuiCol.ButtonHovered : ImGuiCol.Button);
 
+            float cardRounding = 12.0f * uiScale;
             ImGui.RenderNavHighlight(bodySize, id, 0);
-            ImGui.RenderFrame(bodySize.Min, bodySize.Max, col, true, 0);
+            ImGui.RenderFrame(bodySize.Min, bodySize.Max, col, true, cardRounding);
+
+            var borderColor = ImGui.GetColorU32(hovered ? ImGuiCol.NavHighlight : ImGuiCol.Border);
+            ImGui.GetWindowDrawList().AddRect(bodySize.Min, bodySize.Max, borderColor, cardRounding, ImDrawFlags.None, hovered ? 2.0f : 1.0f);
 
             y += InnerPadding;
 
